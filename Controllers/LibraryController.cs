@@ -23,11 +23,26 @@ namespace GridPaginate.Controllers
         }
 
         // GET: Library
-        public IActionResult Index(int? page)
+        public async Task<IActionResult> Index(int? page)
         {
             var pageSize = 10;
             var currentPage = page ?? 1;
-            return View(_context.Books.ToPagedList(currentPage, pageSize));
+            
+            var query = _context.Books.OrderBy(b => b.Id);
+
+            var totalCount = query.CountAsync();
+            var books = await query
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var pagedList = new StaticPagedList<BookModel>(
+                books,
+                currentPage,
+                pageSize,
+                await totalCount);
+
+            return View(pagedList);
         }
 
         // GET: Library/Details/5
